@@ -4,8 +4,8 @@ GO
 USE veterinario;
 GO
 
-CREATE TABLE Dueño (
-    id_dueño int PRIMARY KEY,
+CREATE TABLE Dueï¿½o (
+    id_dueï¿½o int PRIMARY KEY,
     nombre NVARCHAR(100),
     direccion NVARCHAR(100), telefono varchar(50),email nvarchar(100)
 );
@@ -16,9 +16,9 @@ CREATE TABLE Mascota (
     especie NVARCHAR(50),
     raza NVARCHAR(50),
     fecha_nacimiento date,
-    id_dueño INT NOT NULL,
-    CONSTRAINT fk_mascota_dueño FOREIGN KEY (id_dueño) -- ¡Corrección aquí!
-    REFERENCES Dueño(id_dueño)
+    id_dueï¿½o INT NOT NULL,
+    CONSTRAINT fk_mascota_dueï¿½o FOREIGN KEY (id_dueï¿½o) -- ï¿½Correcciï¿½n aquï¿½!
+    REFERENCES Dueï¿½o(id_dueï¿½o)
     ON DELETE CASCADE
 );
 
