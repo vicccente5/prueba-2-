@@ -31,5 +31,7 @@ CONSTRAINT fk_consulta_veterinario FOREIGN KEY (id_veterinario)
 REFERENCES Veterinario(id_veterinario)
 );
 
+hola
+
 
 
