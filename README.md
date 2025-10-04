@@ -13,5 +13,5 @@ pip install pyodbc python-dotenv
 ## Archivos del proyecto
 
 - `.env`: Variables de entorno con credenciales de conexión.
-- `conexion_estudiantes.py`: Script interactivo en consola para listar y agregar estudiantes.
+- `veterinaria.py`: Script interactivo en consola para listar y agregar estudiantes.
 - `SQLQUERY1.sql`: Script SQL para crear la base de datos `veterinario` y las tablas.
