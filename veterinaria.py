@@ -1,7 +1,9 @@
+#inportasion de libreria 
 import pyodbc
 from dotenv import load_dotenv
 import os
 
+#clase para manejar la conexion a la base de datos
 class ConexionBD:
     def __init__(self):
         load_dotenv()
@@ -47,64 +49,61 @@ class ConexionBD:
             print("Error al ejecutar la instrucción:", e)
             self.conexion.rollback()
 
-
+#menú principal
 def mostrar_menu():
-    print("\n--- SISTEMA DE GESTIÓN VETERINARIA ---")
-    print("1. Registrar Nuevo Dueño")
-    print("2. Registrar Nueva Mascota")
-    print("3. Registrar Consulta Médica (Agendamiento)")
-    print("4. Búsqueda por Nombre (Dueño o Mascota)")
-    print("5. Reporte de Historial Clínico por Mascota")
-    print("6. Salir")
-
+    print("\n--- sistema dee gestio veterinaria ---")
+    print("1. registrar dueño")
+    print("2. registrar mascota")
+    print("3. registrar consulta medica (agendar)")
+    print("4. buscar por nombre (dueño o mascota)")
+    print("5. reeporte de historial clinico de una mascota")
+    print("6. salir")
+#registro de Dueño
 def registrar_dueno(db):
-    """Implementa el registro de un nuevo dueño."""
     print("\n--- REGISTRAR NUEVO DUEÑO ---")
     try:
-        id_dueno = input("ID del Dueño (ej: 101): ").strip()
+        id_dueno = input("ID del dueño (ej:101): ").strip()
         if not id_dueno.isdigit():
-            print("Error: El ID debe ser un número.")
+            print("error: el ID debe ser un número.")
             return
 
-        nombre = input("Nombre completo del Dueño: ").strip()
+        nombre = input("nombre completo del Dueño: ").strip()
         if len(nombre) < 3:
-            print("Error: El nombre debe tener al menos 3 caracteres.")
+            print("error: El nombre debe tener al menos 3 caracteres.")
             return
+        
+        direccion = input("dirección: ").strip()
+        telefono = input("teléfono: ").strip()
+        email = input("email: ").strip()
 
-        direccion = input("Dirección: ").strip()
-        telefono = input("Teléfono: ").strip()
-        email = input("Email: ").strip()
-
-        sql = "INSERT INTO Dueno (id_dueno, nombre, direccion, telefono, email) VALUES (?, ?, ?, ?, ?)"
+        sql = "INSERT INTO Dueno (id_dueno, nombre, direccion, telefono, email) VALUES)"
         db.ejecutar_instruccion(sql, (int(id_dueno), nombre, direccion, telefono, email))
     except Exception as e:
-        print(f"Ocurrió un error al registrar al dueño: {e}")
+        print(f"ocurrió un error al registrar al dueño: {e}")
 
-
+#registro de Mascota
 def registrar_mascota(db):
-    """Implementa el registro de una nueva mascota vinculada a un dueño existente."""
     print("\n--- REGISTRAR NUEVA MASCOTA ---")
     try:
-        id_mascota = input("ID de la Mascota (ej: 201): ").strip()
+        id_mascota = input("ID de la mascota (ej:201): ").strip()
         if not id_mascota.isdigit():
-            print("Error: El ID debe ser un número.")
+            print("error: El ID debe ser un número.")
             return
 
-        nombre = input("Nombre de la Mascota: ").strip()
+        nombre = input("Nombre de la mascota: ").strip()
         if len(nombre) < 2:
             print("Error: El nombre debe tener al menos 2 caracteres.")
             return
 
         especie = input("Especie (Perro, Gato, etc.): ").strip()
         raza = input("Raza: ").strip()
-        fecha_nacimiento = input("Fecha de Nacimiento (YYYY-MM-DD): ").strip()
+        fecha_nacimiento = input("Fecha de Nacimiento(YYYY-MM-DD):").strip()
         
-        id_dueno = input("ID del Dueño (DEBE EXISTIR): ").strip()
+        id_dueno = input("ID del Dueño(DEBE EXISTIR):").strip()
         if not id_dueno.isdigit():
             print("Error: El ID del dueño debe ser un número.")
             return
 
-        # Validación simple de existencia del dueño (opcional, pero recomendable)
         dueno = db.ejecutar_consulta("SELECT nombre FROM Dueno WHERE id_dueno = ?", (int(id_dueno),))
         if not dueno:
             print(f"Error: No se encontró un dueño con ID {id_dueno}. Registre al dueño primero.")
@@ -115,22 +114,21 @@ def registrar_mascota(db):
     except Exception as e:
         print(f"Ocurrió un error al registrar la mascota: {e}")
 
-
+#registro de Consulta Médica
 def registrar_consulta(db):
-    """Implementa el agendamiento y registro de una consulta médica."""
     print("\n--- REGISTRAR CONSULTA MÉDICA ---")
     try:
-        id_consulta = input("ID de la Consulta (ej: 301): ").strip()
+        id_consulta = input("ID de la consulta (ej: 301): ").strip()
         if not id_consulta.isdigit():
-            print("Error: El ID debe ser un número.")
+            print("error: El ID debe ser un número.")
             return
             
-        id_mascota = input("ID de la Mascota: ").strip()
+        id_mascota = input("ID de la mascota: ").strip()
         if not id_mascota.isdigit():
-            print("Error: El ID de la mascota debe ser un número.")
+            print("error: El ID de la mascota debe ser un número.")
             return
 
-        # Verificar si la mascota existe
+#verificar si la mascota existe
         mascota = db.ejecutar_consulta("SELECT nombre FROM Mascota WHERE id_mascota = ?", (int(id_mascota),))
         if not mascota:
             print(f"Error: No se encontró una mascota con ID {id_mascota}.")
@@ -141,35 +139,27 @@ def registrar_consulta(db):
             print("Error: El ID del veterinario debe ser un número.")
             return
         
-        # Si se deja vacío, se inserta NULL.
         id_veterinario_param = int(id_veterinario) if id_veterinario else None
-
-        # La fecha de consulta usa DEFAULT GETDATE() en la BD, se puede dejar que la BD la ponga,
-        # o pedirla si la consulta es para el futuro (agendamiento).
-        # Por simplicidad, permitiremos que la BD use la fecha actual.
-
         motivo = input("Motivo de la consulta: ").strip()
         diagnostico = input("Diagnóstico: ").strip()
         tratamiento = input("Tratamiento: ").strip()
         observaciones = input("Observaciones: ").strip()
-
         sql = "INSERT INTO Consulta (id_consulta, id_mascota, id_veterinario, motivo, diagnostico, tratamiento, observaciones) VALUES (?, ?, ?, ?, ?, ?, ?)"
         db.ejecutar_instruccion(sql, (int(id_consulta), int(id_mascota), id_veterinario_param, motivo, diagnostico, tratamiento, observaciones))
 
     except Exception as e:
         print(f"Ocurrió un error al registrar la consulta: {e}")
 
-
+#busqueda de Dueños y Mascotas por Nombre
 def busqueda_por_nombre(db):
-    """Busca y muestra información de dueños o mascotas por nombre."""
-    print("\n--- BÚSQUEDA POR NOMBRE ---")
-    nombre_buscar = input("Ingrese el nombre o parte del nombre (Dueño o Mascota) a buscar: ").strip()
+    print("\n--- BUSQUEDA POR NOMBRE ---")
+    nombre_buscar = input("ingrese el nombre o parte del nombre (dueño o mascota) a buscar: ").strip()
     if not nombre_buscar:
         return
 
     patron = f"%{nombre_buscar}%"
 
-    print("\n--- Resultados de Búsqueda de Dueños ---")
+    print("\n--- Resultados de busqueda de dueños ---")
     sql_dueno = "SELECT id_dueno, nombre, telefono, email FROM Dueno WHERE nombre LIKE ?"
     duenos = db.ejecutar_consulta(sql_dueno, (patron,))
     if duenos:
@@ -179,7 +169,7 @@ def busqueda_por_nombre(db):
         print("No se encontraron dueños.")
 
     print("\n--- Resultados de Búsqueda de Mascotas ---")
-    # Consulta que incluye el nombre del dueño
+#consulta que incluye el nombre del dueño
     sql_mascota = """
     SELECT 
         M.id_mascota, M.nombre, M.especie, M.raza, D.nombre AS nombre_dueno 
@@ -194,17 +184,15 @@ def busqueda_por_nombre(db):
     else:
         print("No se encontraron mascotas.")
 
-
+#reporte de Historial Clínico de una Mascota
 def reporte_historial_clinico(db):
-    """Genera y muestra el historial clínico de una mascota."""
-    print("\n--- REPORTE DE HISTORIAL CLÍNICO ---")
-    id_mascota = input("Ingrese el ID de la Mascota para ver su historial: ").strip()
+    print("\n--- REPORTE DE HISTORIAL CLiNICO ---")
+    id_mascota = input("ingrese el ID de la Mascota para ver su historial: ").strip()
 
     if not id_mascota.isdigit():
-        print("Error: El ID debe ser un número válido.")
+        print("error: El ID debe ser un número válido.")
         return
-
-    # 1. Información de la Mascota y Dueño
+#informacion de la Mascota y su Dueño
     sql_info = """
     SELECT 
         M.nombre, M.especie, M.raza, M.fecha_nacimiento, D.nombre AS nombre_dueno, D.telefono
@@ -215,7 +203,7 @@ def reporte_historial_clinico(db):
     info_mascota = db.ejecutar_consulta(sql_info, (int(id_mascota),))
 
     if not info_mascota:
-        print(f"Error: No se encontró una mascota con ID {id_mascota}.")
+        print(f"error: No se encontró una mascota con ID {id_mascota}.")
         return
 
     info = info_mascota[0]
@@ -225,7 +213,7 @@ def reporte_historial_clinico(db):
     print(f"F. Nacimiento: {info[3]}")
     print(f"Dueño: {info[4]} | Teléfono: {info[5]}")
 
-    # 2. Historial de Consultas
+#historial de Consultas
     sql_historial = """
     SELECT
         C.fecha_consulta, C.motivo, C.diagnostico, C.tratamiento, C.observaciones, V.nombre AS nombre_veterinario
@@ -235,7 +223,6 @@ def reporte_historial_clinico(db):
     ORDER BY C.fecha_consulta DESC
     """
     historial = db.ejecutar_consulta(sql_historial, (int(id_mascota),))
-
     print("\n--- HISTORIAL DE CONSULTAS ---")
     if historial:
         for h in historial:
@@ -248,17 +235,14 @@ def reporte_historial_clinico(db):
             print(f"Tratamiento: {h[3]}")
             print(f"Observaciones: {h[4]}")
     else:
-        print("No hay consultas registradas para esta mascota.")
-
-# --- Función Principal ---
+        print("no hay consultas registradas para esta mascota.")
+#bucle principal
 def main():
     db = ConexionBD()
     db.conectar()
-
     while True:
         mostrar_menu()
         opcion = input("Seleccione una opción: ")
-
         if opcion == "1":
             registrar_dueno(db)
         elif opcion == "2":
@@ -273,9 +257,7 @@ def main():
             print("Saliendo del sistema de gestión veterinaria...")
             break
         else:
-            print("Opción inválida. Intente de nuevo.")
-            
+            print("Opción inválida. Intente de nuevo.")       
     db.cerrar_conexion()
-
 if __name__ == "__main__":
     main()
