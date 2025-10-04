@@ -51,12 +51,12 @@ class ConexionBD:
 
 #menú principal
 def mostrar_menu():
-    print("\n--- sistema dee gestio veterinaria ---")
+    print("\n--- sistema de gestio veterinaria ---")
     print("1. registrar dueño")
     print("2. registrar mascota")
     print("3. registrar consulta medica (agendar)")
     print("4. buscar por nombre (dueño o mascota)")
-    print("5. reeporte de historial clinico de una mascota")
+    print("5. reporte de historial clinico de una mascota")
     print("6. salir")
 #registro de Dueño
 def registrar_dueno(db):
