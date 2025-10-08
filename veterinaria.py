@@ -76,7 +76,8 @@ def registrar_dueno(db):
         telefono = input("teléfono: ").strip()
         email = input("email: ").strip()
 
-        sql = "INSERT INTO Dueno (id_dueno, nombre, direccion, telefono, email) VALUES)"
+
+        sql = "INSERT INTO Dueno (id_dueno, nombre, direccion, telefono, email) VALUES (?, ?, ?, ?, ?)"
         db.ejecutar_instruccion(sql, (int(id_dueno), nombre, direccion, telefono, email))
     except Exception as e:
         print(f"ocurrió un error al registrar al dueño: {e}")

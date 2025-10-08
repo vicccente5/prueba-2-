@@ -2,6 +2,7 @@ CREATE DATABASE veterinario;
 go
 
 
+
 CREATE TABLE Dueno (
 id_dueno INT PRIMARY KEY,nombre NVARCHAR(100) NOT NULL,
 direccion NVARCHAR(100),telefono VARCHAR(50),email NVARCHAR(100)
