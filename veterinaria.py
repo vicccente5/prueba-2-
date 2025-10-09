@@ -1,27 +1,34 @@
-#inportasion de libreria 
-import cx_Oracle
+# Importación de librerías
+import oracledb
 from dotenv import load_dotenv
 import os
+import sys
 
-#clase para manejar la conexion a la base de datos
+# Clase para manejar la conexión a la base de datos 
 class ConexionBD:
     def __init__(self):
         load_dotenv()
-        self.servidor = os.getenv("DB_SERVER")  # Formato: host:puerto/SID
-        self.usuario = os.getenv("DB_USER")
-        self.contrasena = os.getenv("DB_PASSWORD")
-        self.conexion = None
+        try:
+            self.usuario = os.getenv("DB_USER")
+            self.contrasena = os.getenv("DB_PASSWORD")
+            self.dsn = f"{os.getenv('DB_HOST')}:{os.getenv('DB_PORT')}/{os.getenv('DB_SERVICE')}"
+            self.conexion = None
+        except TypeError:
+            print("Error: Asegúrate de que las variables de entorno DB_USER, DB_PASSWORD, DB_HOST, DB_PORT y DB_SERVICE estén definidas en tu archivo .env")
+            sys.exit(1)
+
 
     def conectar(self):
         try:
-            self.conexion = cx_Oracle.connect(
+            self.conexion = oracledb.connect(
                 user=self.usuario,
                 password=self.contrasena,
-                dsn=self.servidor
+                dsn=self.dsn
             )
             print("Conexión exitosa a Oracle SQL.")
-        except cx_Oracle.DatabaseError as e:
-            print("Error al conectar a la base de datos:", e)
+        except oracledb.DatabaseError as e:
+            print(f"Error al conectar a la base de datos: {e}")
+            self.conexion = None
 
     def cerrar_conexion(self):
         if self.conexion:
@@ -29,64 +36,70 @@ class ConexionBD:
             print("Conexión cerrada.")
 
     def ejecutar_consulta(self, consulta, parametros=()):
+        if not self.conexion:
+            print("No hay conexión a la base de datos.")
+            return []
         try:
             cursor = self.conexion.cursor()
             cursor.execute(consulta, parametros)
             return cursor.fetchall()
-        except cx_Oracle.DatabaseError as e:
-            print("Error al ejecutar la consulta:", e)
+        except oracledb.DatabaseError as e:
+            print(f"Error al ejecutar la consulta: {e}")
             return []
 
     def ejecutar_instruccion(self, consulta, parametros=()):
+        if not self.conexion:
+            print("No hay conexión a la base de datos.")
+            return
         try:
             cursor = self.conexion.cursor()
             cursor.execute(consulta, parametros)
             self.conexion.commit()
             print("Instrucción ejecutada correctamente.")
-        except cx_Oracle.DatabaseError as e:
-            print("Error al ejecutar la instrucción:", e)
+        except oracledb.DatabaseError as e:
+            print(f"Error al ejecutar la instrucción: {e}")
             self.conexion.rollback()
 
-#menú principal
+# Menú principal
 def mostrar_menu():
-    print("\n--- sistema de gestio veterinaria ---")
-    print("1. registrar dueño")
-    print("2. registrar mascota")
-    print("3. registrar consulta medica (agendar)")
-    print("4. buscar por nombre (dueño o mascota)")
-    print("5. reporte de historial clinico de una mascota")
-    print("6. salir")
-#registro de Dueño
+    print("\n--- Sistema de Gestión Veterinaria ---")
+    print("1. Registrar Dueño")
+    print("2. Registrar Mascota")
+    print("3. Registrar Consulta Médica (Agendar)")
+    print("4. Buscar por Nombre (Dueño o Mascota)")
+    print("5. Reporte de Historial Clínico de una Mascota")
+    print("6. Salir")
+
+# Registro de Dueño
 def registrar_dueno(db):
     print("\n--- REGISTRAR NUEVO DUEÑO ---")
     try:
-        id_dueno = input("ID del dueño (ej:101): ").strip()
+        id_dueno = input("ID del dueño (ej: 101): ").strip()
         if not id_dueno.isdigit():
-            print("error: el ID debe ser un número.")
+            print("Error: El ID debe ser un número.")
             return
 
-        nombre = input("nombre completo del Dueño: ").strip()
+        nombre = input("Nombre completo del Dueño: ").strip()
         if len(nombre) < 3:
-            print("error: El nombre debe tener al menos 3 caracteres.")
+            print("Error: El nombre debe tener al menos 3 caracteres.")
             return
         
-        direccion = input("dirección: ").strip()
-        telefono = input("teléfono: ").strip()
-        email = input("email: ").strip()
+        direccion = input("Dirección: ").strip()
+        telefono = input("Teléfono: ").strip()
+        email = input("Email: ").strip()
 
-
-        sql = "INSERT INTO Dueno (id_dueno, nombre, direccion, telefono, email) VALUES (?, ?, ?, ?, ?)"
+        sql = "INSERT INTO Dueno (id_dueno, nombre, direccion, telefono, email) VALUES (:1, :2, :3, :4, :5)"
         db.ejecutar_instruccion(sql, (int(id_dueno), nombre, direccion, telefono, email))
     except Exception as e:
-        print(f"ocurrió un error al registrar al dueño: {e}")
+        print(f"Ocurrió un error al registrar al dueño: {e}")
 
-#registro de Mascota
+# Registro de Mascota
 def registrar_mascota(db):
     print("\n--- REGISTRAR NUEVA MASCOTA ---")
     try:
-        id_mascota = input("ID de la mascota (ej:201): ").strip()
+        id_mascota = input("ID de la mascota (ej: 201): ").strip()
         if not id_mascota.isdigit():
-            print("error: El ID debe ser un número.")
+            print("Error: El ID debe ser un número.")
             return
 
         nombre = input("Nombre de la mascota: ").strip()
@@ -96,39 +109,39 @@ def registrar_mascota(db):
 
         especie = input("Especie (Perro, Gato, etc.): ").strip()
         raza = input("Raza: ").strip()
-        fecha_nacimiento = input("Fecha de Nacimiento(YYYY-MM-DD):").strip()
+        fecha_nacimiento = input("Fecha de Nacimiento (YYYY-MM-DD): ").strip()
         
-        id_dueno = input("ID del Dueño(DEBE EXISTIR):").strip()
+        id_dueno = input("ID del Dueño (DEBE EXISTIR): ").strip()
         if not id_dueno.isdigit():
             print("Error: El ID del dueño debe ser un número.")
             return
 
-        dueno = db.ejecutar_consulta("SELECT nombre FROM Dueno WHERE id_dueno = ?", (int(id_dueno),))
+        dueno = db.ejecutar_consulta("SELECT nombre FROM Dueno WHERE id_dueno = :1", (int(id_dueno),))
         if not dueno:
             print(f"Error: No se encontró un dueño con ID {id_dueno}. Registre al dueño primero.")
             return
 
-        sql = "INSERT INTO Mascota (id_mascota, nombre, especie, raza, fecha_nacimiento, id_dueno) VALUES (?, ?, ?, ?, ?, ?)"
+        sql = "INSERT INTO Mascota (id_mascota, nombre, especie, raza, fecha_nacimiento, id_dueno) VALUES (:1, :2, :3, :4, TO_DATE(:5, 'YYYY-MM-DD'), :6)"
         db.ejecutar_instruccion(sql, (int(id_mascota), nombre, especie, raza, fecha_nacimiento, int(id_dueno)))
     except Exception as e:
         print(f"Ocurrió un error al registrar la mascota: {e}")
 
-#registro de Consulta Médica
+# Registro de Consulta Médica
 def registrar_consulta(db):
     print("\n--- REGISTRAR CONSULTA MÉDICA ---")
     try:
         id_consulta = input("ID de la consulta (ej: 301): ").strip()
         if not id_consulta.isdigit():
-            print("error: El ID debe ser un número.")
+            print("Error: El ID debe ser un número.")
             return
             
         id_mascota = input("ID de la mascota: ").strip()
         if not id_mascota.isdigit():
-            print("error: El ID de la mascota debe ser un número.")
+            print("Error: El ID de la mascota debe ser un número.")
             return
 
-#verificar si la mascota existe
-        mascota = db.ejecutar_consulta("SELECT nombre FROM Mascota WHERE id_mascota = ?", (int(id_mascota),))
+        # Verificar si la mascota existe
+        mascota = db.ejecutar_consulta("SELECT nombre FROM Mascota WHERE id_mascota = :1", (int(id_mascota),))
         if not mascota:
             print(f"Error: No se encontró una mascota con ID {id_mascota}.")
             return
@@ -143,23 +156,23 @@ def registrar_consulta(db):
         diagnostico = input("Diagnóstico: ").strip()
         tratamiento = input("Tratamiento: ").strip()
         observaciones = input("Observaciones: ").strip()
-        sql = "INSERT INTO Consulta (id_consulta, id_mascota, id_veterinario, motivo, diagnostico, tratamiento, observaciones) VALUES (?, ?, ?, ?, ?, ?, ?)"
+        sql = "INSERT INTO Consulta (id_consulta, id_mascota, id_veterinario, motivo, diagnostico, tratamiento, observaciones) VALUES (:1, :2, :3, :4, :5, :6, :7)"
         db.ejecutar_instruccion(sql, (int(id_consulta), int(id_mascota), id_veterinario_param, motivo, diagnostico, tratamiento, observaciones))
 
     except Exception as e:
         print(f"Ocurrió un error al registrar la consulta: {e}")
 
-#busqueda de Dueños y Mascotas por Nombre
+# Búsqueda de Dueños y Mascotas por Nombre
 def busqueda_por_nombre(db):
-    print("\n--- BUSQUEDA POR NOMBRE ---")
-    nombre_buscar = input("ingrese el nombre o parte del nombre (dueño o mascota) a buscar: ").strip()
+    print("\n--- BÚSQUEDA POR NOMBRE ---")
+    nombre_buscar = input("Ingrese el nombre o parte del nombre (dueño o mascota) a buscar: ").strip()
     if not nombre_buscar:
         return
 
-    patron = f"%{nombre_buscar}%"
+    patron = f"%{nombre_buscar.upper()}%"
 
-    print("\n--- Resultados de busqueda de dueños ---")
-    sql_dueno = "SELECT id_dueno, nombre, telefono, email FROM Dueno WHERE nombre LIKE ?"
+    print("\n--- Resultados de búsqueda de dueños ---")
+    sql_dueno = "SELECT id_dueno, nombre, telefono, email FROM Dueno WHERE UPPER(nombre) LIKE :1"
     duenos = db.ejecutar_consulta(sql_dueno, (patron,))
     if duenos:
         for d in duenos:
@@ -168,13 +181,12 @@ def busqueda_por_nombre(db):
         print("No se encontraron dueños.")
 
     print("\n--- Resultados de Búsqueda de Mascotas ---")
-#consulta que incluye el nombre del dueño
     sql_mascota = """
     SELECT 
         M.id_mascota, M.nombre, M.especie, M.raza, D.nombre AS nombre_dueno 
     FROM Mascota M 
     JOIN Dueno D ON M.id_dueno = D.id_dueno
-    WHERE M.nombre LIKE ?
+    WHERE UPPER(M.nombre) LIKE :1
     """
     mascotas = db.ejecutar_consulta(sql_mascota, (patron,))
     if mascotas:
@@ -183,26 +195,27 @@ def busqueda_por_nombre(db):
     else:
         print("No se encontraron mascotas.")
 
-#reporte de Historial Clínico de una Mascota
+# Reporte de Historial Clínico de una Mascota
 def reporte_historial_clinico(db):
-    print("\n--- REPORTE DE HISTORIAL CLiNICO ---")
-    id_mascota = input("ingrese el ID de la Mascota para ver su historial: ").strip()
+    print("\n--- REPORTE DE HISTORIAL CLÍNICO ---")
+    id_mascota = input("Ingrese el ID de la Mascota para ver su historial: ").strip()
 
     if not id_mascota.isdigit():
-        print("error: El ID debe ser un número válido.")
+        print("Error: El ID debe ser un número válido.")
         return
-#informacion de la Mascota y su Dueño
+    
+    # Información de la Mascota y su Dueño
     sql_info = """
     SELECT 
-        M.nombre, M.especie, M.raza, M.fecha_nacimiento, D.nombre AS nombre_dueno, D.telefono
+        M.nombre, M.especie, M.raza, TO_CHAR(M.fecha_nacimiento, 'YYYY-MM-DD'), D.nombre AS nombre_dueno, D.telefono
     FROM Mascota M
     JOIN Dueno D ON M.id_dueno = D.id_dueno
-    WHERE M.id_mascota = ?
+    WHERE M.id_mascota = :1
     """
     info_mascota = db.ejecutar_consulta(sql_info, (int(id_mascota),))
 
     if not info_mascota:
-        print(f"error: No se encontró una mascota con ID {id_mascota}.")
+        print(f"Error: No se encontró una mascota con ID {id_mascota}.")
         return
 
     info = info_mascota[0]
@@ -212,13 +225,13 @@ def reporte_historial_clinico(db):
     print(f"F. Nacimiento: {info[3]}")
     print(f"Dueño: {info[4]} | Teléfono: {info[5]}")
 
-#historial de Consultas
+    # Historial de Consultas
     sql_historial = """
     SELECT
-        C.fecha_consulta, C.motivo, C.diagnostico, C.tratamiento, C.observaciones, V.nombre AS nombre_veterinario
+        TO_CHAR(C.fecha_consulta, 'YYYY-MM-DD HH24:MI:SS'), C.motivo, C.diagnostico, C.tratamiento, C.observaciones, V.nombre AS nombre_veterinario
     FROM Consulta C
     LEFT JOIN Veterinario V ON C.id_veterinario = V.id_veterinario
-    WHERE C.id_mascota = ?
+    WHERE C.id_mascota = :1
     ORDER BY C.fecha_consulta DESC
     """
     historial = db.ejecutar_consulta(sql_historial, (int(id_mascota),))
@@ -234,11 +247,18 @@ def reporte_historial_clinico(db):
             print(f"Tratamiento: {h[3]}")
             print(f"Observaciones: {h[4]}")
     else:
-        print("no hay consultas registradas para esta mascota.")
-#bucle principal
+        print("No hay consultas registradas para esta mascota.")
+
+# Bucle principal
 def main():
     db = ConexionBD()
     db.conectar()
+    
+    # Si la conexión falló en el constructor, db.conexion será None
+    if not db.conexion:
+        print("No se pudo establecer la conexión con la base de datos. El programa terminará.")
+        return # Termina la ejecución
+
     while True:
         mostrar_menu()
         opcion = input("Seleccione una opción: ")
@@ -258,5 +278,6 @@ def main():
         else:
             print("Opción inválida. Intente de nuevo.")       
     db.cerrar_conexion()
+
 if __name__ == "__main__":
     main()
