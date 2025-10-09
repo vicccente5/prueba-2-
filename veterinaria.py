@@ -1,5 +1,5 @@
 #inportasion de libreria 
-import pyodbc
+import cx_Oracle
 from dotenv import load_dotenv
 import os
 
@@ -7,24 +7,22 @@ import os
 class ConexionBD:
     def __init__(self):
         load_dotenv()
-        self.servidor = os.getenv("DB_SERVER")
-        self.base_datos = os.getenv("DB_NAME")
+        self.servidor = os.getenv("DB_SERVER")  # Formato: host:puerto/SID
         self.usuario = os.getenv("DB_USER")
         self.contrasena = os.getenv("DB_PASSWORD")
         self.conexion = None
 
     def conectar(self):
         try:
-            self.conexion = pyodbc.connect(
-            f'DRIVER={{ODBC Driver 17 for SQL Server}};'
-            f'SERVER={self.servidor};'
-            f'DATABASE={self.base_datos};'
-            f'UID={self.usuario};'
-            f'PWD={self.contrasena}')
-            print("Conexión exitosa a SQL Server.")
-        except Exception as e:
+            self.conexion = cx_Oracle.connect(
+                user=self.usuario,
+                password=self.contrasena,
+                dsn=self.servidor
+            )
+            print("Conexión exitosa a Oracle SQL.")
+        except cx_Oracle.DatabaseError as e:
             print("Error al conectar a la base de datos:", e)
-            
+
     def cerrar_conexion(self):
         if self.conexion:
             self.conexion.close()
@@ -35,7 +33,7 @@ class ConexionBD:
             cursor = self.conexion.cursor()
             cursor.execute(consulta, parametros)
             return cursor.fetchall()
-        except Exception as e:
+        except cx_Oracle.DatabaseError as e:
             print("Error al ejecutar la consulta:", e)
             return []
 
@@ -45,7 +43,7 @@ class ConexionBD:
             cursor.execute(consulta, parametros)
             self.conexion.commit()
             print("Instrucción ejecutada correctamente.")
-        except Exception as e:
+        except cx_Oracle.DatabaseError as e:
             print("Error al ejecutar la instrucción:", e)
             self.conexion.rollback()
 
